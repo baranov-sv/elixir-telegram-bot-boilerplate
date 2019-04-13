@@ -1,0 +1,22 @@
+version: "3.2"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: elixir-telegram-bot-boilerplate
+    restart: always
+    volumes:
+      - .:/usr/src/app
+    # ports:
+    #   - 8080:8080
+    tty: true
+    stdin_open: true
+
+# volumes:
+#   nfsmount:
+#     driver: local
+#     driver_opts:
+#       type: nfs
+#       o: addr=host.docker.internal,rw,nolock,hard,nointr,nfsvers=3
+#       device: ":${MARKEAZE_API_SOURCE_DIR}"
