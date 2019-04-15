@@ -4,6 +4,17 @@ defmodule App.Commands do
 
   alias App.Commands.Outside
 
+  command "start" do
+    Logger.log :info, "Command /start received"
+    
+    hello = case update.message.from.username do
+      name when is_binary(name) -> "Hello " <> name
+      _ -> send_message "Hello"        
+    end
+
+    send_message hello
+  end
+
   # You can create commands in the format `/command` by
   # using the macro `command "command"`.
   command ["hello", "hi"] do
