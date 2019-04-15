@@ -2,6 +2,8 @@ defmodule App.Poller do
   use GenServer
   require Logger
 
+  @polling_timeout 1000
+
   # Server
 
   def start_link do
@@ -10,29 +12,36 @@ defmodule App.Poller do
   end
 
   def init(:ok) do
-    update()
-    {:ok, 0}
+    {:ok, [], @polling_timeout}
   end
 
-  def handle_cast(:update, offset) do
-    new_offset = Nadia.get_updates([offset: offset])
-                 |> process_messages
+  def handle_cast(:update, _) do
+    get_updates()
 
-    {:noreply, new_offset + 1, 100}
+    {:noreply, [], @polling_timeout}
   end
 
-  def handle_info(:timeout, offset) do
-    update()
-    {:noreply, offset}
+  def handle_info(:timeout, _) do
+    get_updates()
+
+    {:noreply, [], @polling_timeout}
   end
 
   # Client
-
+  
   def update do
     GenServer.cast __MODULE__, :update
   end
 
   # Helpers
+
+  defp get_updates do
+    offset = Agent.get(App.Offset, & &1)
+    last_message_id = Nadia.get_updates([offset: offset])
+      |> process_messages
+
+    Agent.update(App.Offset, fn _ -> last_message_id + 1 end)
+  end
 
   defp process_messages({:ok, []}), do: -1
   defp process_messages({:ok, results}) do
@@ -57,12 +66,9 @@ defmodule App.Poller do
   end
 
   defp process_message(nil), do: IO.puts "nil"
-  defp process_message(message) do
-    try do
-      App.Matcher.match message
-    rescue
-      err in MatchError ->
-        Logger.log :warn, "Errored with #{err} at #{Poison.encode! message}"
-    end
+  defp process_message(%{update_id: id} = message) do
+    App.Matcher.match message
+    
+    id
   end
 end
