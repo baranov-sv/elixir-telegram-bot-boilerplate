@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Start service
+# chmod +x bin/start
+# docker run -v $(pwd):/opt/build --rm -it elixir-ubuntu:latest /opt/build/bin/start
+
+set -e
+set -x
+
+cd /opt/build/rel/artifacts || exit 1
+
+# Extract release
+tar -xzf app-0.1.0.tar.gz
+# Set permissions
+# chown -R ec2-user:ec2-user /opt/app
+
+bin/app foreground
+
+exit 0
